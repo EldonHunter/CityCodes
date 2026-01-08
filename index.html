@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Informations sur une ville française</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, button {
+            padding: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .city {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Rechercher une ville par code postal</h2>
+    <input type="text" id="postalCode" placeholder="Ex : 75001">
+    <button onclick="searchCity()">Rechercher</button>
+
+    <div id="result" class="result"></div>
+</div>
+
+<script>
+function searchCity() {
+    const postalCode = document.getElementById("postalCode").value;
+    const resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = "";
+
+    if (postalCode.length !== 5) {
+        resultDiv.innerHTML = "<p>Veuillez entrer un code postal valide.</p>";
+        return;
+    }
+
+    fetch(`https://api-adresse.data.gouv.fr/search/?q=&postcode=${postalCode}&type=municipality`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.features.length === 0) {
+                resultDiv.innerHTML = "<p>Aucune ville trouvée.</p>";
+                return;
+            }
+
+            data.features.forEach(feature => {
+                const city = feature.properties;
+                const coords = feature.geometry.coordinates;
+
+                resultDiv.innerHTML += `
+                    <div class="city">
+                        <strong>Ville :</strong> ${city.city}<br>
+                        <strong>Code postal :</strong> ${city.postcode}<br>
+                        <strong>Département :</strong> ${city.context.split(",")[0]}<br>
+                        <strong>Région :</strong> ${city.context.split(",")[2]}<br>
+                        <strong>Latitude :</strong> ${coords[1]}<br>
+                        <strong>Longitude :</strong> ${coords[0]}
+                    </div>
+                `;
+            });
+        })
+        .catch(error => {
+            resultDiv.innerHTML = "<p>Erreur lors de la récupération des données.</p>";
+            console.error(error);
+        });
+}
+</script>
+
+</body>
+</html>
