@@ -2,93 +2,85 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Informations sur une ville française</title>
+    <title>Infos ville - Geo API Gouv</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f4f4f4;
+            background-color: #f5f5f5;
             padding: 20px;
         }
-        .container {
+        .box {
             background: white;
-            padding: 20px;
             max-width: 600px;
             margin: auto;
+            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         input, button {
-            padding: 10px;
             width: 100%;
+            padding: 10px;
             margin-top: 10px;
         }
         button {
-            background: #007bff;
+            background-color: #0066cc;
             color: white;
             border: none;
             cursor: pointer;
         }
-        button:hover {
-            background: #0056b3;
-        }
-        .result {
-            margin-top: 20px;
-        }
         .city {
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
+            border-top: 1px solid #ddd;
+            margin-top: 15px;
+            padding-top: 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Rechercher une ville par code postal</h2>
-    <input type="text" id="postalCode" placeholder="Ex : 75001">
-    <button onclick="searchCity()">Rechercher</button>
+<div class="box">
+    <h2>Recherche par code postal</h2>
+    <input type="text" id="codePostal" placeholder="Ex : 75001">
+    <button onclick="search()">Rechercher</button>
 
-    <div id="result" class="result"></div>
+    <div id="result"></div>
 </div>
 
 <script>
-function searchCity() {
-    const postalCode = document.getElementById("postalCode").value;
-    const resultDiv = document.getElementById("result");
-    resultDiv.innerHTML = "";
+function search() {
+    const cp = document.getElementById("codePostal").value.trim();
+    const result = document.getElementById("result");
+    result.innerHTML = "";
 
-    if (postalCode.length !== 5) {
-        resultDiv.innerHTML = "<p>Veuillez entrer un code postal valide.</p>";
+    if (!/^[0-9]{5}$/.test(cp)) {
+        result.innerHTML = "Code postal invalide.";
         return;
     }
 
-    
-    fetch(`https://geo.api.gouv.fr/communes?codePostal=${cp}&fields=nom,code,codeDepartement,departement,region,population,centre&format=json`)
+    fetch(`https://geo.api.gouv.fr/communes?codePostal=${cp}&fields=nom,code,codeDepartement,departement,region,population,centre`)
         .then(response => response.json())
-        .then(data => {
-            if (data.features.length === 0) {
-                resultDiv.innerHTML = "<p>Aucune ville trouvée.</p>";
+        .then(communes => {
+            if (communes.length === 0) {
+                result.innerHTML = "Aucune commune trouvée.";
                 return;
             }
 
-            data.features.forEach(feature => {
-                const city = feature.properties;
-                const coords = feature.geometry.coordinates;
-
-                resultDiv.innerHTML += `
+            communes.forEach(ville => {
+                result.innerHTML += `
                     <div class="city">
-                        <strong>Ville :</strong> ${city.city}<br>
-                        <strong>Code postal :</strong> ${city.postcode}<br>
-                        <strong>Département :</strong> ${city.context.split(",")[0]}<br>
-                        <strong>Région :</strong> ${city.context.split(",")[2]}<br>
-                        <strong>Latitude :</strong> ${coords[1]}<br>
-                        <strong>Longitude :</strong> ${coords[0]}
+                        <strong>Ville :</strong> ${ville.nom}<br>
+                        <strong>Code INSEE :</strong> ${ville.code}<br>
+                        <strong>Code postal :</strong> ${cp}<br>
+                        <strong>Département :</strong> ${ville.departement.nom} (${ville.codeDepartement})<br>
+                        <strong>Région :</strong> ${ville.region.nom}<br>
+                        <strong>Population :</strong> ${ville.population ?? "Non disponible"}<br>
+                        <strong>Latitude :</strong> ${ville.centre.coordinates[1]}<br>
+                        <strong>Longitude :</strong> ${ville.centre.coordinates[0]}
                     </div>
                 `;
             });
         })
         .catch(error => {
-            resultDiv.innerHTML = "<p>Erreur lors de la récupération des données.</p>";
             console.error(error);
+            result.innerHTML = "Erreur lors de l'appel à l'API.";
         });
 }
 </script>
