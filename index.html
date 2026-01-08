@@ -61,7 +61,8 @@ function searchCity() {
         return;
     }
 
-    fetch(`https://api-adresse.data.gouv.fr/search/?q=&postcode=${postalCode}&type=municipality`)
+    
+    fetch(`https://geo.api.gouv.fr/communes?codePostal=${cp}&fields=nom,code,codeDepartement,departement,region,population,centre&format=json`)
         .then(response => response.json())
         .then(data => {
             if (data.features.length === 0) {
